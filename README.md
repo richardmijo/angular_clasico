@@ -1,59 +1,92 @@
-# AngularPerformanceDemo
+# ⚡ Angular Performance Lab: Zone.js vs Signals
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.0.
+Este proyecto es una demostración educativa diseñada para visualizar y sentir la diferencia drástica de rendimiento entre el **"Angular Clásico"** (dependiente de Zone.js) y el **"Angular Moderno"** (impulsado por Signals y ChangeDetectionStrategy.OnPush).
 
-## Development server
+![Angular Version](https://img.shields.io/badge/Angular-v17%2B-dd0031)
+![License](https://img.shields.io/badge/License-MIT-blue)
 
-To start a local development server, run:
+## 🎯 Objetivo Didáctico
 
-```bash
-ng serve
-```
+El objetivo es contrastar dos paradigmas de renderizado en Angular mediante un escenario extremo de **filtrado en tiempo real de 3,000 elementos**:
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+1.  **🔴 Lado Lento (Legacy Anti-Patterns)**: Simula una aplicación antigua u optimizada pobremente.
+2.  **🟢 Lado Rápido (Modern Best Practices)**: Muestra el poder de la reactividad granular con Signals.
 
-## Code scaffolding
+---
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## 🏗️ Arquitectura del Experimento
 
-```bash
-ng generate component component-name
-```
+La pantalla está dividida en dos secciones independientes:
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### 🔴 Lado Lento (Izquierda)
+*   **Mecanismo**: Usa `Zone.js` para la detección de cambios.
+*   **Anti-patrones Implementados**:
+    *   Uso de `[(ngModel)]` sin estrategias de control.
+    *   **Filtrado en el Template**: El filtro corre en cada ciclo de detección de cambios global.
+    *   **Carga Artificial**: Cada item de la lista ejecuta la función `getHeavyTitle()` que realiza cálculos matemáticos pesados en tiempo real.
+*   **Resultado Observable**: Al escribir en el input, la interfaz se congela ("Jank"), el input responde lento y la CPU se satura. "Zone.js" detecta cambios en toda la app por cada tecla presionada.
 
-```bash
-ng generate --help
-```
+### 🟢 Lado Rápido (Derecha)
+*   **Mecanismo**: `ChangeDetectionStrategy.OnPush` + **Signals**.
+*   **Mejores Prácticas**:
+    *   **Reactividad**: El estado (lista de canciones y término de búsqueda) son `Signals`.
+    *   **Computed Signals**: La lista filtrada es un `computed()`, que solo se recalcula cuando sus dependencias cambian y está memoizado.
+    *   **Renderizado Optimizado**: Usa la sintaxis moderna `@for`.
+*   **Resultado Observable**: Filtrado instantáneo (60fps), sin bloqueo del UI, independientemente de la carga de datos.
 
-## Building
+---
 
-To build the project run:
+## 🚀 Cómo Ejecutar el Proyecto
 
-```bash
-ng build
-```
+Este proyecto es Standalone y no requiere configuración compleja.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+### Prerrequisitos
+*   Node.js (v18 o superior)
+*   NPM
 
-## Running unit tests
+### Pasos
+1.  **Clonar el repositorio**:
+    ```bash
+    git clone https://github.com/richardmijo/angular_clasico.git
+    cd angular_clasico
+    ```
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+2.  **Instalar dependencias**:
+    ```bash
+    npm install
+    ```
 
-```bash
-ng test
-```
+3.  **Iniciar el servidor de desarrollo**:
+    ```bash
+    npm start
+    ```
 
-## Running end-to-end tests
+4.  **Abrir en el navegador**:
+    Visita `http://localhost:4200`
 
-For end-to-end (e2e) testing, run:
+---
 
-```bash
-ng e2e
-```
+## 🧪 Guía de Pruebas
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Para experimentar la diferencia real, sigue estos pasos:
 
-## Additional Resources
+1.  Abre la **Consola del Desarrollador** (F12) en tu navegador.
+2.  Ve al **Lado Lento (Rojo)** y escribe rápido cualquier texto (ej: "Song").
+    *   *Observa*: El retraso entre lo que tecleas y lo que aparece.
+    *   *Consola*: Verás miles de logs `🔴 SlowSide: Detectando cambios...`.
+3.  Ve al **Lado Rápido (Verde)** y escribe lo mismo.
+    *   *Observa*: Fluidez total e inmediata.
+    *   *Consola*: Silencio absoluto (o logs mínimos), indicando que Angular no está redibujando innecesariamente.
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+---
+
+## 📂 Estructura de Archivos Clave
+
+*   `src/app/slow-side/slow-side.component.ts`: Donde ocurre "el desastre". Mira la función `getHeavyTitle` y cómo `ngDoCheck` se dispara constantemente.
+*   `src/app/fast-side/fast-side.component.ts`: La solución elegante. Mira el uso de `signal()`, `computed()` y `ChangeDetectionStrategy.OnPush`.
+
+---
+
+## 📝 Conclusión para Estudiantes
+
+Este demo prueba que **Zone.js** (el modelo por defecto antiguo) puede sufrir problemas de rendimiento si no se tiene cuidado, ya que cualquier evento dispara una revisión global. **Signals**, por otro lado, permite a Angular saber *exactamente* qué cambió y actualizar *solo* lo necesario, permitiendo interfaces fluidas incluso con cálculos complejos.
